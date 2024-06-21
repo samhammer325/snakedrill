@@ -8,8 +8,8 @@ import { Preloader } from './scenes/Preloader';
 //  https://newdocs.phaser.io/docs/3.70.0/Phaser.Types.Core.GameConfig
 const config = {
     type: Phaser.AUTO,
-    width: 128 * 10,
-    height: 128 * 10,
+    width: 128 * 25,
+    height: 128 * 25,
     parent: 'game-container',
     backgroundColor: '#028af8',
     scale: {
@@ -20,7 +20,6 @@ const config = {
         default: 'arcade',
         arcade: {
             gravity: { y: 0 },
-            debug: true
         }
     },
 
