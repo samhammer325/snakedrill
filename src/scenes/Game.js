@@ -14,12 +14,16 @@ export class Game extends Scene
   }
 
   updateGame() {
+    this.player.lastLocation = { x: this.player.x, y: this.player.y };
     // player can only move on tileSize grid
     this.player.x = Math.round(this.player.x / (this.tileSize)) * (this.tileSize);
     this.player.y = Math.round(this.player.y / (this.tileSize)) * (this.tileSize);
 
-    this.player.move(this.direction, this.tileSize); 
+
+    this.player.move(this.player.direction, this.tileSize); 
     this.moved = false;
+
+
 
    // addFood.bind(this)();
 //    if(checkCollisionPlayer(this.player, this.rectangle))
@@ -37,7 +41,6 @@ function createFunction() {
 //    var color = 0xffff00;
     this.tileSize = 128;
     this.gameSpeed = 100;
-    this.direction = 'right';
     this.zoom = 1;
     this.tileNumber = 25;
 
@@ -52,6 +55,8 @@ function createFunction() {
     this.player = this.add.image(128, 128, 'player');
     this.player.depth = 3;
     this.player.setOrigin(0, 0);
+
+    this.player.direction = 'right';
 
     var x = Math.floor(this.tileNumber * 0.5) * this.tileSize; 
     var y = Math.floor(this.tileNumber * 0.5) * this.tileSize; 
@@ -92,8 +97,11 @@ function createFunction() {
       //this.player.bodySegments[i] = this.add.graphics();
       //this.player.bodySegments[i].fillStyle(color);
       //this.player.bodySegments[i].fillRect(0, 0, this.tileSize, this.tileSize);
-      this.player.bodySegments[i].x = segment.x;
-      this.player.bodySegments[i].y = segment.y;
+      //this.player.bodySegments[i].x = segment.x;
+      //this.player.bodySegments[i].y = segment.y;
+
+      console.log('position', segment.x, segment.y);
+
       this.player.bodySegments[i].depth = 2;
       this.player.bodySegments[i].setScale(0.5);
       this.tweens.add({targets: this.player.bodySegments[i], x: (x - (this.tileSize * i * 2)) + this.tileSize, y: y, duration: this.gameSpeed, ease: 'Linear'});
@@ -174,8 +182,58 @@ function moveFunction(direction, tileSize) {
 }
 function bodySegmentsMoveFunction() {
   //console.log('this.bodySegments', this.bodySegments);
+  var xTarget;
+  var yTarget;
+
+
   this.bodySegments.forEach((segment) => {
-    this.scene.tweens.add({targets: segment, x: segment.frontSegment.x, y: segment.frontSegment.y, duration: this.scene.gameSpeed, ease: 'Linear'});
+    xTarget = segment.x;
+    yTarget = segment.y;
+
+    //console.log(' segment position', segment.x, segment.y);
+    //console.log('segment.frontSegment.lastLocation', segment.frontSegment.lastLocation);
+
+    segment.x = Math.round(segment.x / (this.scene.tileSize)) * (this.scene.tileSize);
+    segment.y = Math.round(segment.y / (this.scene.tileSize)) * (this.scene.tileSize);
+    //console.log('segment position', segment.x, segment.y, this.scene.tileSize, this.scene.tileSize);
+
+    // TODO initial setup last location
+    segment.lastLocation = {x: segment.x, y: segment.y};
+    //console.log('segment.lastLocation', segment.lastLocation);
+
+    xTarget = segment.frontSegment.lastLocation.x;
+    yTarget = segment.frontSegment.lastLocation.y;
+
+    //if (segment.direction === 'up') {
+    //  yTarget = segment.frontSegment.y;
+    //  //yTarget += segment.frontSegment.y;
+    //}
+    //if (segment.direction === 'down') {
+    //  yTarget = segment.frontSegment.y;
+    //}
+    //if (segment.direction === 'left') {
+    //  xTarget = segment.frontSegment.x;
+    //}
+    //if (segment.direction === 'right') {
+    //  xTarget = segment.frontSegment.x;
+    //}
+
+
+    //console.log("segment.y", segment.y, segment.frontSegment.y);
+    //console.log("segment.x", segment.x, segment.frontSegment.x);
+    //if (Math.floor(segment.y) === Math.floor(segment.frontSegment.y)) {
+    //  segment.direction = segment.frontSegment.direction;
+    //}
+
+    //if (Math.floor(segment.x) === Math.floor(segment.frontSegment.x)) {
+    //  segment.direction = segment.frontSegment.direction;
+    //}
+
+
+
+    if( xTarget !== Math.round(segment.frontSegment.x / (this.tileSize)) * (this.tileSize)) {
+      this.scene.tweens.add({targets: segment, x: xTarget, y: yTarget, duration: this.scene.gameSpeed, ease: 'Linear'});
+    }
   });
 } 
 
@@ -183,21 +241,21 @@ function handleDKeyDown() {
   if (this.moved === true) {
     return;
   }
-  if( this.direction === 'left' ) {
+  if( this.player.direction === 'left' ) {
     return;
   }
-  this.direction = 'right';
+  this.player.direction = 'right';
   this.moved = true;
 }
 function handleAKeyDown() {
   if (this.moved === true) {
     return;
   }
-  if ( this.direction === 'right' ) {
+  if ( this.player.direction === 'right' ) {
     return;
   }
 
-  this.direction = 'left';
+  this.player.direction = 'left';
   this.moved = true;
 }
 function handleWKeyDown() {
@@ -205,22 +263,22 @@ function handleWKeyDown() {
     return;
   }
 
-  if (this.direction === 'down') {
+  if (this.player.direction === 'down') {
     return;
   }
 
-  this.direction = 'up';
+  this.player.direction = 'up';
   this.moved = true;
 }
 function handleSKeyDown() {
   if (this.moved === true) {
     return;
   }
-  if (this.direction === 'up') {
+  if (this.player.direction === 'up') {
     return;
   }
 
-  this.direction = 'down';
+  this.player.direction = 'down';
   this.moved = true;
 }
 function createWalls() {
@@ -261,8 +319,41 @@ function addFood() {
   // red color: 0xff0000
   this.food = this.add.rectangle(this.game.config.width, this.game.config.height, this.tileSize, this.tileSize, 0xff0000);
   this.food.setOrigin(0, 0);
-  this.food.x = (Math.floor(Math.random() * (this.game.config.width - 256) / this.tileSize) + 1) * this.tileSize;
-  this.food.y = (Math.floor(Math.random() * (this.game.config.height - 256) / this.tileSize) + 1) * this.tileSize;
+
+
+
+  // dont allow food to be placed on top of the player or bodySegments
+
+  var onSnake;
+
+  var tryX;
+  var tryY;
+  do {
+
+    onSnake = false;
+
+    
+
+    tryX = (Math.floor(Math.random() * (this.game.config.width - 256) / this.tileSize) + 1) * this.tileSize;
+    tryY = (Math.floor(Math.random() * (this.game.config.height - 256) / this.tileSize) + 1) * this.tileSize;
+
+    this.player.bodySegments.forEach((segment) => {
+      //console.log('segmentxy', (Math.round(segment.x / (this.tileSize)) * (this.tileSize)), (Math.round(segment.y / (this.tileSize)) * (this.tileSize)), tryX, tryY);
+      // Math.round(this.player.x / (this.tileSize)) * (this.tileSize)
+      if (Math.round(segment.x / (this.tileSize)) * (this.tileSize) === tryX && Math.round(segment.y / (this.tileSize)) * (this.tileSize) === tryY) {
+        console.log('food on snake!!!!!!!!!!!!!!!!!!!!!!!!!!');
+        onSnake = true;
+      }
+    }
+    );
+
+
+  } while (onSnake);
+
+  this.food.x = tryX;
+  this.food.y = tryY;
+
+
   this.physics.add.existing(this.food);
   this.physics.add.collider(this.player, this.food, handleFoodCollision, null, this);
 }
@@ -274,7 +365,7 @@ function handleCollision() {
 }
 
 function handleFoodCollision() {
-  console.log('food collision');
+  //console.log('food collision');
   this.player.bodySegments.push(this.add.rectangle(this.game.config.width, this.game.config.height, this.tileSize, this.tileSize, 0x0000FF));
   this.player.bodySegments[this.player.bodySegments.length - 1].setOrigin(0, 0);
   this.player.bodySegments[this.player.bodySegments.length - 1].x = this.player.bodySegments[this.player.bodySegments.length - 2].x;
