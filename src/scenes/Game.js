@@ -19,11 +19,8 @@ export class Game extends Scene
     this.player.x = Math.round(this.player.x / (this.tileSize)) * (this.tileSize);
     this.player.y = Math.round(this.player.y / (this.tileSize)) * (this.tileSize);
 
-
     this.player.move(this.player.direction, this.tileSize); 
     this.moved = false;
-
-
 
    // addFood.bind(this)();
 //    if(checkCollisionPlayer(this.player, this.rectangle))
@@ -35,22 +32,25 @@ export class Game extends Scene
 }
 function createFunction() {
 
-
     this.cameras.main.setBackgroundColor(0x00ff00);
 
 //    var color = 0xffff00;
     this.tileSize = 128;
-    this.gameSpeed = 100;
+    this.gameSpeed = 150;
     this.zoom = 1;
     this.tileNumber = 25;
 
     this.gameBorders = this.tileSize * 50
 
+  this.add.image(0, 0, 'floor-tiles')
+    .setOrigin(0, 0)
+    .setDisplaySize(this.sys.game.config.width, this.sys.game.config.height);
+
     // set up player
     //this.player = this.add.graphics();  this.player.fillStyle(color); this.player.fillRect(0, 0, this.tileSize, this.tileSize);  this.player.x = x; this.player.y = y;
     console.log('player', this.textures.get('player'));
 
-    this.wall = this.physics.add.staticSprite(128 * 2, 128 * 2, 'wall');
+    //this.wall = this.physics.add.staticSprite(128 * 2, 128 * 2, 'wall');
 
     this.player = this.add.image(128, 128, 'player');
     this.player.depth = 3;
@@ -67,6 +67,7 @@ function createFunction() {
 
     // scale player by half 
     this.player.setScale(0.5);
+
 
    /// this.player.body.setSize(this.tileSize, this.tileSize);
     
@@ -86,10 +87,11 @@ function createFunction() {
     //this.player.bodySegments.push(new Phaser.Geom.Rectangle(x - (this.tileSize * (this.player.bodySegments.length + 1)), y, this.tileSize, this.tileSize));
     //this.player.bodySegments.push(new Phaser.Geom.Rectangle(x - (this.tileSize * (this.player.bodySegments.length + 1)), y, this.tileSize, this.tileSize));
 
-
     console.log('this', this);
     console.log('physics', this.physics);
     this.physics.add.existing(this.player);
+
+    this.player.body.setCircle(90);
 
     this.player.bodySegments.forEach((segment, i) => {
 
@@ -112,8 +114,9 @@ function createFunction() {
         this.player.bodySegments[i].frontSegment = this.player.bodySegments[i - 1];
       }
 
-      if ( i > 3 ) {
+      if ( i > 1 ) {
         this.physics.add.existing(this.player.bodySegments[i]);
+        this.player.bodySegments[i].body.setCircle(60);
         this.physics.add.collider(this.player, this.player.bodySegments[i], handleCollision, null, this);
       }
 
@@ -130,8 +133,14 @@ function createFunction() {
     this.sKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
     this.sKey.on('down', handleSKeyDown.bind(this), this);
 
-    
-
+    this.upKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
+    this.upKey.on('down', handleWKeyDown.bind(this), this);
+    this.downKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN);
+    this.downKey.on('down', handleSKeyDown.bind(this), this);
+    this.leftKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
+    this.leftKey.on('down', handleAKeyDown.bind(this), this);
+    this.rightKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
+    this.rightKey.on('down', handleDKeyDown.bind(this), this);
 
     //// Listen for the keyup event on the "D" key
     //this.dKey.on('up', this.handleDKeyUp, this);
@@ -145,7 +154,6 @@ function createFunction() {
     // update game when game speed is reached
     this.time.addEvent({ delay: this.gameSpeed, callback: this.updateGame, callbackScope: this, loop: true });
 
-
     this.input.once('pointerdown', () => {
 
       // delete game objects
@@ -158,8 +166,6 @@ function createFunction() {
       this.scene.start('GameOver');
 
     });
-
-
 }
 function moveFunction(direction, tileSize) {
   switch (direction) {
@@ -184,7 +190,6 @@ function bodySegmentsMoveFunction() {
   //console.log('this.bodySegments', this.bodySegments);
   var xTarget;
   var yTarget;
-
 
   this.bodySegments.forEach((segment) => {
     xTarget = segment.x;
@@ -218,7 +223,6 @@ function bodySegmentsMoveFunction() {
     //  xTarget = segment.frontSegment.x;
     //}
 
-
     //console.log("segment.y", segment.y, segment.frontSegment.y);
     //console.log("segment.x", segment.x, segment.frontSegment.x);
     //if (Math.floor(segment.y) === Math.floor(segment.frontSegment.y)) {
@@ -229,14 +233,11 @@ function bodySegmentsMoveFunction() {
     //  segment.direction = segment.frontSegment.direction;
     //}
 
-
-
     if( xTarget !== Math.round(segment.frontSegment.x / (this.tileSize)) * (this.tileSize)) {
       this.scene.tweens.add({targets: segment, x: xTarget, y: yTarget, duration: this.scene.gameSpeed, ease: 'Linear'});
     }
   });
 } 
-
 function handleDKeyDown() {
   if (this.moved === true) {
     return;
@@ -291,19 +292,33 @@ function createWalls() {
   this.physics.add.existing(this.rightWall);
   this.physics.add.collider(this.player, this.rightWall, handleCollision, null, this);
 
-  this.leftWall = this.add.rectangle(this.game.config.width, this.game.config.height, 128, this.game.config.height, 0x808080);
-  this.leftWall.setOrigin(0, 0);
-  this.leftWall.x = 0;
-  this.leftWall.y = 0;
-  this.physics.add.existing(this.leftWall);
-  this.physics.add.collider(this.player, this.leftWall, handleCollision, null, this);
 
   this.topWall = this.add.rectangle(this.game.config.width, this.game.config.height, this.game.config.width, 128, 0x808080);
   this.topWall.setOrigin(0, 0);
   this.topWall.x = 0;
   this.topWall.y = 0;
   this.physics.add.existing(this.topWall);
-  this.physics.add.collider(this.player, this.topWall, handleCollision, null, this);
+  //this.physics.add.collider(this.player, this.topWall, handleCollision, null, this);
+  this.topWallBarrier = this.add.rectangle(this.game.config.width, this.game.config.height, this.game.config.width, 50, 0x808080);
+  this.topWallBarrier.setOrigin(0, 0);
+  this.topWallBarrier.x = 0;
+  this.topWallBarrier.y = -50;
+  this.physics.add.existing(this.topWallBarrier);
+  this.physics.add.collider(this.player, this.topWallBarrier, handleCollision, null, this);
+
+
+  this.leftWall = this.add.rectangle(this.game.config.width, this.game.config.height, 128, this.game.config.height, 0x808080);
+  this.leftWall.setOrigin(0, 0);
+  this.leftWall.x = 0;
+  this.leftWall.y = 0;
+  this.physics.add.existing(this.leftWall);
+  //this.physics.add.collider(this.player, this.leftWall, handleCollision, null, this);
+  this.leftWallBarrier = this.add.rectangle(this.game.config.width, this.game.config.height, 50, this.game.config.height, 0x808080);
+  this.leftWallBarrier.setOrigin(0, 0);
+  this.leftWallBarrier.x = -50;
+  this.leftWallBarrier.y = 0;
+  this.physics.add.existing(this.leftWallBarrier);
+  this.physics.add.collider(this.player, this.leftWallBarrier, handleCollision, null, this);
 
   this.bottomWall = this.add.rectangle(this.game.config.width, this.game.config.height, this.game.config.width, 128, 0x808080);
   this.bottomWall.setOrigin(0, 0);
@@ -313,14 +328,20 @@ function createWalls() {
   this.physics.add.collider(this.player, this.bottomWall, handleCollision, null, this);
 
 }
-
 function addFood() {
   console.log('addFood');
   // red color: 0xff0000
-  this.food = this.add.rectangle(this.game.config.width, this.game.config.height, this.tileSize, this.tileSize, 0xff0000);
+  //this.food = this.add.rectangle(this.game.config.width, this.game.config.height, this.tileSize, this.tileSize, 0xff0000);
+  //  this.player.bodySegments.push(this.add.image(x - this.tileSize * 8, y, 'body'));
+  this.food = this.add.image(this.game.config.width, this.game.config.height, 'berry');
+  // resize image
+  this.food.setScale(0.5);
+
+  // add food body 
+  this.physics.add.existing(this.food);
+
   this.food.setOrigin(0, 0);
-
-
+  this.food.body.setCircle(90);
 
   // dont allow food to be placed on top of the player or bodySegments
 
@@ -331,8 +352,6 @@ function addFood() {
   do {
 
     onSnake = false;
-
-    
 
     tryX = (Math.floor(Math.random() * (this.game.config.width - 256) / this.tileSize) + 1) * this.tileSize;
     tryY = (Math.floor(Math.random() * (this.game.config.height - 256) / this.tileSize) + 1) * this.tileSize;
@@ -353,17 +372,14 @@ function addFood() {
   this.food.x = tryX;
   this.food.y = tryY;
 
-
   this.physics.add.existing(this.food);
   this.physics.add.collider(this.player, this.food, handleFoodCollision, null, this);
 }
-
 function handleCollision() {
   console.log('collision');
   this.scene.stop('Game');
   this.scene.start('GameOver');
 }
-
 function handleFoodCollision() {
   //console.log('food collision');
   this.player.bodySegments.push(this.add.rectangle(this.game.config.width, this.game.config.height, this.tileSize, this.tileSize, 0x0000FF));
@@ -373,6 +389,10 @@ function handleFoodCollision() {
   this.player.bodySegments[this.player.bodySegments.length - 1].frontSegment = this.player.bodySegments[this.player.bodySegments.length - 2];
   this.physics.add.existing(this.player.bodySegments[this.player.bodySegments.length - 1]);
   this.physics.add.collider(this.player, this.player.bodySegments[this.player.bodySegments.length - 1], handleCollision.bind(this), null, this.scene);
+
+
+  // set collision body to circle
+  this.player.bodySegments[this.player.bodySegments.length - 1].body.setCircle(50);
 
   // destroy the food
   this.food.destroy();

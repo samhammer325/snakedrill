@@ -19,6 +19,10 @@ export class Boot extends Scene
         this.load.image('wall', 'assets/tPipe.png');
         this.load.image('player', 'assets/snakehead.png');
         this.load.image('body', 'assets/snakebody.png');
+        this.load.image('berry', 'assets/berry.png');
+        this.load.image('tiles', 'assets/tiles.png');
+        this.load.image('floor-tiles', 'assets/floor-tiles.png');
+        
 
 
     }
