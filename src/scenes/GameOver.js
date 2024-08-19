@@ -19,6 +19,13 @@ export class GameOver extends Scene
             align: 'center'
         }).setOrigin(0.5);
 
+        let score = this.add.text(128 * 25 / 2, 128 * 25 / 2 + 200, 'Score: ' + this.registry.get('displayScore'), {
+          fontFamily: 'Arial Black', fontSize: 128, color: '#ffffff',
+          stroke: '#000000', strokeThickness: 8,
+          align: 'center'
+        }).setOrigin(0.5);
+
+
         this.input.once('pointerdown', () => {
 
             this.scene.start('MainMenu');

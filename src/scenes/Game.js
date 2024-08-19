@@ -10,6 +10,7 @@ export class Game extends Scene
   {
     createFunction.bind(this)();
     createWalls.bind(this)();
+    createScore.bind(this)();
     addFood.bind(this)();
   }
 
@@ -19,7 +20,9 @@ export class Game extends Scene
     this.player.x = Math.round(this.player.x / (this.tileSize)) * (this.tileSize);
     this.player.y = Math.round(this.player.y / (this.tileSize)) * (this.tileSize);
 
-    this.player.move(this.player.direction, this.tileSize); 
+    // smooth movement
+    this.player.move(this.player.direction, this.tileSize);
+    //this.player.move(this.player.direction, this.tileSize); 
     this.moved = false;
 
    // addFood.bind(this)();
@@ -37,8 +40,19 @@ function createFunction() {
 //    var color = 0xffff00;
     this.tileSize = 128;
     this.gameSpeed = 150;
+
+  //           this.scene.start('Game', {fast: true});
+
+    if (this.scene.settings.data.fast) {
+      console.log('fast');
+      this.gameSpeed = 100;
+    }
+
+
     this.zoom = 1;
     this.tileNumber = 25;
+
+    this.score = 0;
 
     this.gameBorders = this.tileSize * 50
 
@@ -154,36 +168,38 @@ function createFunction() {
     // update game when game speed is reached
     this.time.addEvent({ delay: this.gameSpeed, callback: this.updateGame, callbackScope: this, loop: true });
 
-    this.input.once('pointerdown', () => {
+    //this.input.once('pointerdown', () => {
 
-      // delete game objects
-      this.player.destroy();
-      this.player.bodySegments.forEach((segment) => {
-        segment.destroy();
-      });
-      this.scene.stop('Game');
+    //  // delete game objects
+    //  this.player.destroy();
+    //  this.player.bodySegments.forEach((segment) => {
+    //    segment.destroy();
+    //  });
+    //  this.scene.stop('Game');
 
-      this.scene.start('GameOver');
+    //  this.scene.start('GameOver');
 
-    });
+    //});
 }
 function moveFunction(direction, tileSize) {
+  let directionX;
+  let directionY;
   switch (direction) {
     case 'up':
-      this.y -= tileSize;
+      this.scene.tweens.add({targets: this, x: this.x, y: this.y - tileSize, duration: this.scene.gameSpeed, ease: 'Linear'});
     break;
     case 'down':
-      this.y += tileSize;
+      this.scene.tweens.add({targets: this, x: this.x, y: this.y + tileSize, duration: this.scene.gameSpeed, ease: 'Linear'});
     break;
     case 'left':
-      this.x -= tileSize;
+      this.scene.tweens.add({targets: this, x: this.x - tileSize, y: this.y, duration: this.scene.gameSpeed, ease: 'Linear'});
     break;
     case 'right':
-      this.x += tileSize;
+      this.scene.tweens.add({targets: this, x: this.x + tileSize, y: this.y, duration: this.scene.gameSpeed, ease: 'Linear'});
     break;
   }
   // tween
-  this.scene.tweens.add({targets: this, x: this.x, y: this.y, duration: this.scene.gameSpeed, ease: 'Linear'});
+  //this.scene.tweens.killTweensOf(this);
   this.bodySegmentsMove( this.scene );
 }
 function bodySegmentsMoveFunction() {
@@ -328,6 +344,21 @@ function createWalls() {
   this.physics.add.collider(this.player, this.bottomWall, handleCollision, null, this);
 
 }
+function createScore() {
+
+
+  this.scoreText = this.add.text(128 * 25 / 2, 75, 'Score: ' + this.score, { 
+    fontSize: '128px', fill: '#000',
+    stroke: '#000000', strokeThickness: 8,
+    align: 'center'
+  }).setOrigin(0.5);
+
+  //let fast = this.add.text(128 * 25 / 2, 128 * 25 / 2 + 200, 'Fast Mode', {
+  //  fontFamily: 'Arial Black', fontSize: 128, color: '#ffffff',
+  //  stroke: '#000000', strokeThickness: 8,
+  //  align: 'center'
+  //}).setOrigin(0.5);
+}
 function addFood() {
   console.log('addFood');
   // red color: 0xff0000
@@ -378,6 +409,13 @@ function addFood() {
 function handleCollision() {
   console.log('collision');
   this.scene.stop('Game');
+  // if fast mode
+  if (this.scene.settings.data.fast) {
+    this.registry.set('fastscore', this.score);
+  } else {
+    this.registry.set('score', this.score);
+  }
+  this.registry.set('displayScore', this.score);
   this.scene.start('GameOver');
 }
 function handleFoodCollision() {
@@ -396,6 +434,9 @@ function handleFoodCollision() {
 
   // destroy the food
   this.food.destroy();
+
+  this.score += 1;
+  this.scoreText.setText('Score: ' + this.score);
   
   addFood.bind(this)();
 }
